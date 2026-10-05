@@ -1,14 +1,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Languages } from 'lucide-react';
 import en from './locales/en.js';
+import zh from './locales/zh.js';
 
 // Défini ici plutôt qu'importé depuis ui.jsx, qui importe lui-même ce module.
 const cx = (...c) => c.filter(Boolean).join(' ');
 
 // Le français est la langue source : t('Texte français') renvoie la traduction ou le texte d'origine.
 // Variables : t('{n} joueur(s) en ligne', { n: 3 }).
-const DICTIONARIES = { en };
+const DICTIONARIES = { en, zh };
 export const LANGUAGES = [
+  { code: 'zh', label: '中文' },
   { code: 'en', label: 'English' },
   { code: 'fr', label: 'Français' },
 ];
