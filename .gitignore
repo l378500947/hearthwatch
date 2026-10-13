@@ -10,4 +10,7 @@ plugin/refs/
 .env
 local/
 
+# Build scratch for tools/build-patched-arena.sh (game refs are proprietary).
+.arena-build/
+
 *.log
