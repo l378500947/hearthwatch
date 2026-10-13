@@ -122,46 +122,118 @@ namespace HearthwatchArena
             return 1;
         }
 
-        public static string TierName(int tier) => tier >= 1 && tier <= MaxTier ? Tiers[tier].Name : "?";
+        public static string TierName(int tier) => tier >= 1 && tier <= MaxTier
+            ? T(Tiers[tier].Name)
+            : "?";
 
         // ---------- Textes en jeu ----------
+        // Les clés sont toujours le texte français d'origine (les appels T("...") ne changent pas).
+        // Chaque paquet de langue est une simple table clé → traduction : ajouter une langue
+        // ne demande donc aucune modification de code, juste une entrée dans Packs.
 
         public static string Language = "fr";
 
-        private static readonly Dictionary<string, string> En = new Dictionary<string, string>
+        private static readonly Dictionary<string, Dictionary<string, string>> Packs =
+            new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
-            ["L'arène s'éveille… {0} s"] = "The arena awakens… {0} s",
-            ["Palier {0} : {1}"] = "Tier {0}: {1}",
-            ["Vague {0} / {1}"] = "Wave {0} / {1}",
-            ["Vague {0} terminée !"] = "Wave {0} cleared!",
-            ["Prochaine vague dans {0} s"] = "Next wave in {0} s",
-            ["Un champion approche !"] = "A champion approaches!"
-            ,
-            ["Victoire ! L'arène est vaincue."] = "Victory! The arena is conquered.",
-            ["Défaite… l'arène a gagné."] = "Defeat… the arena has won.",
-            ["Combat abandonné."] = "Fight abandoned.",
-            ["Reviens dans l'arène ! ({0} s)"] = "Get back in the arena! ({0} s)",
-            ["Récompenses déposées au centre de l'arène"] = "Rewards dropped at the arena centre",
-            ["Nouveau record : vague {0} au palier {1} !"] = "New record: wave {0} at tier {1}!",
-            ["{0} est tombé. Il reste {1} combattant(s)."] = "{0} has fallen. {1} fighter(s) remain.",
-            ["L'arène se repose. Réessayez dans {0} s."] = "The arena rests. Try again in {0} s.",
-            ["Arène — entrez dans le cercle pour combattre"] = "Arena — step into the circle to fight",
-            ["La cité « {0} » sort de terre !"] = "The city of {0} is rising!",
-            ["La cité « {0} » est achevée. Gloire à l'Empereur !"] = "The city of {0} is complete. Glory to the Emperor!",
-            ["Bienvenue à {0} !"] = "Welcome to {0}!",
-            ["L'Empereur vous accorde la parcelle {0} de {1}"] = "The Emperor grants you plot {0} of {1}",
-            ["Proclamation de l'Empereur {0} : {1}"] = "Proclamation of Emperor {0}: {1}",
-            ["Vous entrez dans {0}, cité de l'Empereur {1}"] = "You enter {0}, city of Emperor {1}",
-            ["Vous quittez {0}. Bonne route, aventurier !"] = "You leave {0}. Safe travels, adventurer!",
-            ["Parcelle {0} — {1}"] = "Plot {0} — {1}",
-            ["Parcelle {0} — libre"] = "Plot {0} — available",
-            ["Portail : {0}"] = "Portal: {0}",
-            ["Construction interdite dans {0} hors de votre parcelle : matériaux rendus"] = "No building in {0} outside your plot: materials returned",
+            ["en"] = new Dictionary<string, string>
+            {
+                ["L'arène s'éveille… {0} s"] = "The arena awakens… {0} s",
+                ["Palier {0} : {1}"] = "Tier {0}: {1}",
+                ["Vague {0} / {1}"] = "Wave {0} / {1}",
+                ["Vague {0} terminée !"] = "Wave {0} cleared!",
+                ["Prochaine vague dans {0} s"] = "Next wave in {0} s",
+                ["Un champion approche !"] = "A champion approaches!",
+                ["Victoire ! L'arène est vaincue."] = "Victory! The arena is conquered.",
+                ["Défaite… l'arène a gagné."] = "Defeat… the arena has won.",
+                ["Combat abandonné."] = "Fight abandoned.",
+                ["Reviens dans l'arène ! ({0} s)"] = "Get back in the arena! ({0} s)",
+                ["Récompenses déposées au centre de l'arène"] = "Rewards dropped at the arena centre",
+                ["Nouveau record : vague {0} au palier {1} !"] = "New record: wave {0} at tier {1}!",
+                ["{0} est tombé. Il reste {1} combattant(s)."] = "{0} has fallen. {1} fighter(s) remain.",
+                ["L'arène se repose. Réessayez dans {0} s."] = "The arena rests. Try again in {0} s.",
+                ["Arène — entrez dans le cercle pour combattre"] = "Arena — step into the circle to fight",
+                ["La cité « {0} » sort de terre !"] = "The city of {0} is rising!",
+                ["La cité « {0} » est achevée. Gloire à l'Empereur !"] = "The city of {0} is complete. Glory to the Emperor!",
+                ["Bienvenue à {0} !"] = "Welcome to {0}!",
+                ["L'Empereur vous accorde la parcelle {0} de {1}"] = "The Emperor grants you plot {0} of {1}",
+                ["Proclamation de l'Empereur {0} : {1}"] = "Proclamation of Emperor {0}: {1}",
+                ["Vous entrez dans {0}, cité de l'Empereur {1}"] = "You enter {0}, city of Emperor {1}",
+                ["Vous quittez {0}. Bonne route, aventurier !"] = "You leave {0}. Safe travels, adventurer!",
+                ["Parcelle {0} — {1}"] = "Plot {0} — {1}",
+                ["Parcelle {0} — libre"] = "Plot {0} — available",
+                ["Portail : {0}"] = "Portal: {0}",
+                ["Construction interdite dans {0} hors de votre parcelle : matériaux rendus"] = "No building in {0} outside your plot: materials returned",
+                ["Prairies"] = "Meadows",
+                ["Forêt noire"] = "Black Forest",
+                ["Marais"] = "Swamp",
+                ["Montagnes"] = "Mountains",
+                ["Plaines"] = "Plains",
+                ["Brumes"] = "Mistlands",
+                ["Terres cendrées"] = "Ashlands",
+                ["Nord profond"] = "Deep North",
+            },
+
+            ["zh"] = new Dictionary<string, string>
+            {
+                // ---- 竞技场 ----
+                ["L'arène s'éveille… {0} s"] = "竞技场正在苏醒…{0} 秒",
+                ["Palier {0} : {1}"] = "第 {0} 阶：{1}",
+                ["Vague {0} / {1}"] = "第 {0} / {1} 波",
+                ["Vague {0} terminée !"] = "第 {0} 波已清空！",
+                ["Prochaine vague dans {0} s"] = "下一波 {0} 秒后",
+                ["Un champion approche !"] = "冠军正在逼近！",
+                ["Victoire ! L'arène est vaincue."] = "胜利！竞技场已被征服。",
+                ["Défaite… l'arène a gagné."] = "失败…竞技场获胜了。",
+                ["Combat abandonné."] = "战斗已放弃。",
+                ["Reviens dans l'arène ! ({0} s)"] = "快回到竞技场！({0} 秒)",
+                ["Récompenses déposées au centre de l'arène"] = "奖励已投放在竞技场中央",
+                ["Nouveau record : vague {0} au palier {1} !"] = "新纪录：第 {1} 阶第 {0} 波！",
+                ["{0} est tombé. Il reste {1} combattant(s)."] = "{0} 已倒下，还剩 {1} 名战士。",
+                ["L'arène se repose. Réessayez dans {0} s."] = "竞技场正在休整，{0} 秒后可再次挑战。",
+                ["Arène — entrez dans le cercle pour combattre"] = "竞技场 — 走进圈内开始战斗",
+
+                // ---- 城市 ----
+                ["La cité « {0} » sort de terre !"] = "城市「{0}」正在崛起！",
+                ["La cité « {0} » est achevée. Gloire à l'Empereur !"] = "城市「{0}」已建成。皇帝万岁！",
+                ["Bienvenue à {0} !"] = "欢迎来到 {0}！",
+                ["L'Empereur vous accorde la parcelle {0} de {1}"] = "皇帝授予你第 {0} 号地块（共 {1} 块）",
+                ["Proclamation de l'Empereur {0} : {1}"] = "皇帝 {0} 的公告：{1}",
+                ["Vous entrez dans {0}, cité de l'Empereur {1}"] = "你进入了 {0}，皇帝 {1} 的城市",
+                ["Vous quittez {0}. Bonne route, aventurier !"] = "你离开了 {0}。一路顺风，冒险者！",
+                ["Parcelle {0} — {1}"] = "地块 {0} — {1}",
+                ["Parcelle {0} — libre"] = "地块 {0} — 空闲",
+                ["Portail : {0}"] = "传送门：{0}",
+                ["Construction interdite dans {0} hors de votre parcelle : matériaux rendus"] = "{0} 内禁止在他人地块建造：材料已返还",
+
+                // ---- 阶位名称 ----
+                ["Prairies"] = "草原",
+                ["Forêt noire"] = "黑森林",
+                ["Marais"] = "沼泽",
+                ["Montagnes"] = "山脉",
+                ["Plaines"] = "平原",
+                ["Brumes"] = "迷雾之地",
+                ["Terres cendrées"] = "灰烬之地",
+                ["Nord profond"] = "深境北地",
+            },
         };
+
+        // Langues proposées dans la configuration.
+        public static readonly string[] Languages = { "fr", "en", "zh" };
+
+        // Normalise une valeur de configuration : renvoie une langue connue, "fr" par défaut.
+        public static string Normalize(string lang)
+        {
+            if (string.IsNullOrEmpty(lang)) return "fr";
+            lang = lang.Trim().ToLowerInvariant();
+            foreach (var l in Languages) if (l == lang) return l;
+            return "fr";
+        }
 
         public static string T(string text, params object[] args)
         {
-            if (Language == "en" && En.TryGetValue(text, out var en)) text = en;
+            if (Language != "fr" && Packs.TryGetValue(Language, out var pack) && pack.TryGetValue(text, out var translated))
+                text = translated;
             return args == null || args.Length == 0 ? text : string.Format(text, args);
         }
     }

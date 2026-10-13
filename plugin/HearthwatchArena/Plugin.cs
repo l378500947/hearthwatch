@@ -56,7 +56,7 @@ namespace HearthwatchArena
         private void Awake()
         {
             _outputDir = Config.Bind("General", "OutputDirectory", "", "Dossier d'échange avec le panel. Vide = <savedir>/panelmap");
-            _language = Config.Bind("General", "Language", "fr", "Langue des messages en jeu : fr ou en");
+            _language = Config.Bind("General", "Language", "fr", "Langue des messages en jeu : fr, en ou zh");
             _waves = Config.Bind("Arena", "Waves", 10, "Nombre de vagues pour remporter un combat");
             _rewardMultiplier = Config.Bind("Arena", "RewardMultiplier", 1f, "Multiplicateur des récompenses");
             _cooldown = Config.Bind("Arena", "CooldownSeconds", 60, "Repos de l'arène entre deux combats");
@@ -79,8 +79,8 @@ namespace HearthwatchArena
                 _prizeOverrides[tier].SettingChanged += (_, __) => PrizeOverrides.SetRaw(tier, _prizeOverrides[tier].Value);
             }
 
-            _language.SettingChanged += (_, __) => Tables.Language = _language.Value == "en" ? "en" : "fr";
-            Tables.Language = _language.Value == "en" ? "en" : "fr";
+            _language.SettingChanged += (_, __) => Tables.Language = Tables.Normalize(_language.Value);
+            Tables.Language = Tables.Normalize(_language.Value);
             new HarmonyLib.Harmony(Guid).PatchAll(typeof(Plugin).Assembly);
             Logger.LogInfo($"{Name} {Version} loaded");
         }
@@ -311,7 +311,7 @@ namespace HearthwatchArena
                     if (cmd.TryGetValue("waves", out var w) && int.TryParse(w, out var wv)) _settings.Waves = Mathf.Clamp(wv, 3, 30);
                     if (cmd.TryGetValue("rewardMultiplier", out var rm) && float.TryParse(rm, NumberStyles.Float, CultureInfo.InvariantCulture, out var rmv)) _settings.RewardMultiplier = Mathf.Clamp(rmv, 0.25f, 5f);
                     if (cmd.TryGetValue("cooldown", out var cd) && int.TryParse(cd, out var cdv)) _settings.CooldownSeconds = Mathf.Clamp(cdv, 0, 3600);
-                    if (cmd.TryGetValue("language", out var lang)) { Tables.Language = lang == "en" ? "en" : "fr"; _language.Value = Tables.Language; }
+                    if (cmd.TryGetValue("language", out var lang)) { Tables.Language = Tables.Normalize(lang); _language.Value = Tables.Language; }
                     Save();
                     return "Réglages enregistrés";
                 case "clear-records":
