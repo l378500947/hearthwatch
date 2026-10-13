@@ -254,12 +254,8 @@ namespace HearthwatchArena
             }
         }
 
-        // Un feu verrouillé n'est jamais simulé : plein de combustible, il brûle pour toujours.
-        public static void KeepLit(GameObject prefab, ZDO zdo)
-        {
-            var fire = prefab.GetComponentInChildren<Fireplace>(true);
-            if (fire != null) zdo.Set(ZDOVars.s_fuel, Mathf.Max(1f, fire.m_maxFuel));
-        }
+        // 2026-10-12 — KeepLit retiré avec le verrouillage des pièces : sans serveur-propriétaire,
+        // un feu est normalement simulé et consomme son combustible (l'administrateur entretient à la main).
 
         public static void Destroy(ZDOID id)
         {
@@ -272,7 +268,6 @@ namespace HearthwatchArena
         public static void Destroy(ZDO zdo)
         {
             if (zdo == null) return;
-            Ownership.Locked.Remove(zdo.m_uid);
             if (!zdo.IsOwner()) zdo.SetOwner(ZDOMan.GetSessionID());
             ZDOMan.instance.DestroyZDO(zdo);
         }

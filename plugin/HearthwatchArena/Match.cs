@@ -386,7 +386,12 @@ namespace HearthwatchArena
 
             var share = outcome == "victory" ? 1f : outcome == "abandon" ? 0.5f : 0.25f;
             if (outcome == "victory")
-                foreach (var (item, count) in Tables.Tiers[Tier].Prize) Add(item, Mathf.RoundToInt(count * _settings.RewardMultiplier));
+            {
+                // PATCH(PrizeOverrides): cfg 里配置了 [Arena.Prize.N] 时优先用它，
+                // 未配置或解析失败则回退内置 Tables 默认（原行为不变）。
+                var prizes = PrizeOverrides.For(Tier, Tables.Tiers[Tier].Prize);
+                foreach (var (item, count) in prizes) Add(item, Mathf.RoundToInt(count * _settings.RewardMultiplier));
+            }
             Add("Coins", _bankCoins);
 
             var dropped = 0;

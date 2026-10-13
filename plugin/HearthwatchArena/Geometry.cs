@@ -285,7 +285,7 @@ namespace HearthwatchArena
                 }
                 sb.Append(']');
             }
-            sb.Append(",\"lock\":").Append(Ownership.CanLock(prefab) ? "true" : "false");
+            sb.Append(",\"lock\":false");
             sb.Append('}');
             return sb.ToString();
         }

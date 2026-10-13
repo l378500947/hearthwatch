@@ -375,11 +375,7 @@ namespace HearthwatchArena
             var zdo = Game.Spawn(prefab, position, rotation);
             if (zdo == null) return null;
             zdo.Set(ArenaMark, 1);
-            if (Ownership.CanLock(prefab))
-            {
-                Ownership.Lock(zdo);
-                Game.KeepLit(prefab, zdo);
-            }
+            // 2026-10-12 — plus de verrouillage : le serveur ne retient plus la propriété des pièces.
             site.Pieces.Add(zdo.m_uid);
             return zdo;
         }

@@ -24,6 +24,8 @@ namespace HearthwatchArena
         private ConfigEntry<float> _rewardMultiplier;
         private ConfigEntry<int> _cooldown;
         private ConfigEntry<bool> _debugCommands;
+        // PATCH(PrizeOverrides): 每个 tier 一个可选的奖励覆盖项
+        private readonly ConfigEntry<string>[] _prizeOverrides = new ConfigEntry<string>[Tables.MaxTier + 1];
 
         private static readonly HarmonyLib.AccessTools.FieldRef<ZoneSystem, HashSet<Vector2s>> GeneratedZones =
             HarmonyLib.AccessTools.FieldRefAccess<ZoneSystem, HashSet<Vector2s>>("m_generatedZones");
@@ -59,6 +61,24 @@ namespace HearthwatchArena
             _rewardMultiplier = Config.Bind("Arena", "RewardMultiplier", 1f, "Multiplicateur des récompenses");
             _cooldown = Config.Bind("Arena", "CooldownSeconds", 60, "Repos de l'arène entre deux combats");
             _debugCommands = Config.Bind("Debug", "TestCommands", false, "Commandes de test du panel (pose d'une pièce au nom d'un joueur fictif)");
+
+            // PATCH(PrizeOverrides): 每个 tier 的奖励覆盖项。
+            // 留空 = 沿用内置默认（原行为不变）。
+            // 格式: "PrefabName:Count, PrefabName:Count"（数量可省略，默认 1）
+            // 示例: "AncientSeed:1, DustMagic:3, Coins:100"
+            for (var t = 1; t <= Tables.MaxTier; t++)
+            {
+                var tier = t;   // 闭包捕获
+                var tierName = Tables.Tiers[tier].Name;
+                _prizeOverrides[tier] = Config.Bind(
+                    "Arena.Prize." + tier,
+                    "Items",
+                    "",
+                    $"Remplace les récompenses (Prize) du palier {tier} ({tierName}). Format: \"Prefab:Count, Prefab:Count\". Vide = récompenses intégrées par défaut.");
+                PrizeOverrides.SetRaw(tier, _prizeOverrides[tier].Value);
+                _prizeOverrides[tier].SettingChanged += (_, __) => PrizeOverrides.SetRaw(tier, _prizeOverrides[tier].Value);
+            }
+
             _language.SettingChanged += (_, __) => Tables.Language = _language.Value == "en" ? "en" : "fr";
             Tables.Language = _language.Value == "en" ? "en" : "fr";
             new HarmonyLib.Harmony(Guid).PatchAll(typeof(Plugin).Assembly);
@@ -109,11 +129,7 @@ namespace HearthwatchArena
                 // avant de vérifier que les pièces de l'arène existent encore.
                 if (ObjectsById(ZDOMan.instance).Count == 0 && now < _readyAt + 15f) return;
                 _loaded = true;
-                Safe("locks", () =>
-                {
-                    Ownership.Rebuild(ObjectsById(ZDOMan.instance).Values);
-                    if (Ownership.Locked.Count > 0) Logger.LogInfo($"{Ownership.Locked.Count} server-held pieces");
-                });
+                // 2026-10-12 — verrouillage retiré : plus de Rebuild() ni de journal « server-held pieces ».
                 Safe("load", Load);
                 Safe("city", _city.Load);
             }

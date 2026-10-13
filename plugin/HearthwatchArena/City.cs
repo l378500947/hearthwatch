@@ -634,12 +634,8 @@ namespace HearthwatchArena
                     var value = pair.Value is string name ? name.GetStableHashCode() : (int)Json.Num(pair.Value);
                     zdo.Set(pair.Key.GetStableHashCode(), value);
                 }
-            // Présentoirs de l'armurerie : tenus par le serveur, les objets exposés ne peuvent pas être emportés.
-            if (!piece.NoLock && (piece.ForceLock || Ownership.CanLock(prefab)))
-            {
-                Ownership.Lock(zdo);
-                Game.KeepLit(prefab, zdo);
-            }
+            // 2026-10-12 — plus de verrouillage des présentoirs : le serveur ne retient plus la propriété,
+            // les objets exposés redeviennent ramassables comme n'importe quel objet au sol.
             return zdo;
         }
 
