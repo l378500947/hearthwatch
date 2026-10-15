@@ -495,14 +495,12 @@ namespace HearthwatchArena
             }
             if (_plan == null) return;
             var now = Time.time;
+            // Plus de recensement périodique : les pièces de la ville sont marquées indestructibles à la
+            // construction (voir MakeIndestructible), donc plus rien ne disparaît et il n'y a rien à
+            // réparer. Census() ne tourne plus qu'à la demande (bouton de reconstruction du panel).
             if (now >= _nextCensus)
             {
                 _nextCensus = now + 30f;
-                Census();
-                // Plus de la moitié des pièces manquent : le monde a sans doute été rechargé depuis une sauvegarde antérieure
-                // à la construction. On ne rebâtit pas à l'aveugle : l'admin décide depuis le panel.
-                _cityMissingFromSave = _plan.Pieces.Count > 0 && _missingSince.Count > _plan.Pieces.Count / 2;
-                if (_autoRepairMinutes > 0 && !_cityMissingFromSave) Repair(force: false);
                 ApplyTexts();
             }
             if (now >= _nextProtect)
@@ -618,6 +616,42 @@ namespace HearthwatchArena
             return doomed.Count;
         }
 
+        // ---------- Invulnérabilité des pièces de la ville ----------
+        // Les pièces de la ville sont marquées dans leur ZDO, pas dans le prefab : les murs qu'un joueur
+        // pose lui-même avec le même prefab restent donc parfaitement destructibles.
+        //   health = -1        -> le jeu ignore les dégâts sur une structure dont la vie est négative
+        //   WearNTear.m_health = -1 -> empêche la réparation de rétablir une vie positive
+        //   Piece.m_canBeRemoved = false -> le marteau ne peut plus la retirer
+        // Les deux derniers passent par des champs ZDO : il faut donc déclarer HasFields et les
+        // drapeaux de sous-classe (HasFieldsWearNTear / HasFieldsPiece) pour que le jeu les relise.
+        private static readonly int HealthKey = ZDOVars.s_health;
+        private static readonly int MaxHealthKey = "WearNTear.m_health".GetStableHashCode();
+        private static readonly int HasFieldsKey = "HasFields".GetStableHashCode();
+        private static readonly int HasFieldsWearNTearKey = "HasFieldsWearNTear".GetStableHashCode();
+        private static readonly int HasFieldsPieceKey = "HasFieldsPiece".GetStableHashCode();
+        private static readonly int CanBeRemovedKey = "Piece.m_canBeRemoved".GetStableHashCode();
+        private static readonly int BuildingSkillKey = "BuildingSkillLevel".GetStableHashCode();
+
+        private static void MakeIndestructible(ZDO zdo, GameObject prefab)
+        {
+            if (zdo == null || prefab == null) return;
+            zdo.Set(HasFieldsKey, true);
+            zdo.Set(HealthKey, -1f);
+            var wear = prefab.GetComponent<WearNTear>();
+            if (wear != null)
+            {
+                zdo.Set(HasFieldsWearNTearKey, true);
+                zdo.Set(MaxHealthKey, -1f);
+                zdo.RemoveFloat(BuildingSkillKey);
+            }
+            var piece = prefab.GetComponent<Piece>();
+            if (piece != null)
+            {
+                zdo.Set(HasFieldsPieceKey, true);
+                zdo.Set(CanBeRemovedKey, false);
+            }
+        }
+
         private ZDO PlacePiece(CityPlan plan, int index)
         {
             var piece = plan.Pieces[index];
@@ -626,6 +660,7 @@ namespace HearthwatchArena
             var zdo = Game.Spawn(prefab, piece.Position, Quaternion.Euler(0f, piece.Rotation, 0f), 1, piece.Tamed);
             if (zdo == null) return null;
             zdo.Set(CityMark, index + 1);
+            MakeIndestructible(zdo, prefab);
             if (!string.IsNullOrEmpty(piece.Text)) zdo.Set(ZDOVars.s_text, piece.Text);
             if (piece.Ints != null)
                 foreach (var pair in piece.Ints)
