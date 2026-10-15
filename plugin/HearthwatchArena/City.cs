@@ -198,7 +198,6 @@ namespace HearthwatchArena
         private int _standing;
         private readonly Dictionary<int, float> _missingSince = new Dictionary<int, float>();
         private int _repaired;
-        private bool _cityMissingFromSave;
 
         // Écrit le monde sur disque tout de suite : un arrêt brutal ne doit pas faire perdre une construction.
         private void SaveWorld()
@@ -616,42 +615,6 @@ namespace HearthwatchArena
             return doomed.Count;
         }
 
-        // ---------- Invulnérabilité des pièces de la ville ----------
-        // Les pièces de la ville sont marquées dans leur ZDO, pas dans le prefab : les murs qu'un joueur
-        // pose lui-même avec le même prefab restent donc parfaitement destructibles.
-        //   health = -1        -> le jeu ignore les dégâts sur une structure dont la vie est négative
-        //   WearNTear.m_health = -1 -> empêche la réparation de rétablir une vie positive
-        //   Piece.m_canBeRemoved = false -> le marteau ne peut plus la retirer
-        // Les deux derniers passent par des champs ZDO : il faut donc déclarer HasFields et les
-        // drapeaux de sous-classe (HasFieldsWearNTear / HasFieldsPiece) pour que le jeu les relise.
-        private static readonly int HealthKey = ZDOVars.s_health;
-        private static readonly int MaxHealthKey = "WearNTear.m_health".GetStableHashCode();
-        private static readonly int HasFieldsKey = "HasFields".GetStableHashCode();
-        private static readonly int HasFieldsWearNTearKey = "HasFieldsWearNTear".GetStableHashCode();
-        private static readonly int HasFieldsPieceKey = "HasFieldsPiece".GetStableHashCode();
-        private static readonly int CanBeRemovedKey = "Piece.m_canBeRemoved".GetStableHashCode();
-        private static readonly int BuildingSkillKey = "BuildingSkillLevel".GetStableHashCode();
-
-        private static void MakeIndestructible(ZDO zdo, GameObject prefab)
-        {
-            if (zdo == null || prefab == null) return;
-            zdo.Set(HasFieldsKey, true);
-            zdo.Set(HealthKey, -1f);
-            var wear = prefab.GetComponent<WearNTear>();
-            if (wear != null)
-            {
-                zdo.Set(HasFieldsWearNTearKey, true);
-                zdo.Set(MaxHealthKey, -1f);
-                zdo.RemoveFloat(BuildingSkillKey);
-            }
-            var piece = prefab.GetComponent<Piece>();
-            if (piece != null)
-            {
-                zdo.Set(HasFieldsPieceKey, true);
-                zdo.Set(CanBeRemovedKey, false);
-            }
-        }
-
         private ZDO PlacePiece(CityPlan plan, int index)
         {
             var piece = plan.Pieces[index];
@@ -660,7 +623,7 @@ namespace HearthwatchArena
             var zdo = Game.Spawn(prefab, piece.Position, Quaternion.Euler(0f, piece.Rotation, 0f), 1, piece.Tamed);
             if (zdo == null) return null;
             zdo.Set(CityMark, index + 1);
-            MakeIndestructible(zdo, prefab);
+            Indestructible.Mark(zdo, prefab);
             if (!string.IsNullOrEmpty(piece.Text)) zdo.Set(ZDOVars.s_text, piece.Text);
             if (piece.Ints != null)
                 foreach (var pair in piece.Ints)
@@ -839,7 +802,6 @@ namespace HearthwatchArena
                 sb.Append(",\"building\":{\"phase\":").Append(Json.Str(_phase)).Append(",\"placed\":").Append(_cursor)
                   .Append(",\"zonesLeft\":").Append(ZonesLeft()).Append('}');
             if (_lastError != null) sb.Append(",\"error\":").Append(Json.Str(_lastError));
-            if (_cityMissingFromSave) sb.Append(",\"notInSave\":true");
             if (_plan != null)
             {
                 sb.Append(",\"emperor\":").Append(Json.Str(_plan.Emperor));

@@ -375,6 +375,9 @@ namespace HearthwatchArena
             var zdo = Game.Spawn(prefab, position, rotation);
             if (zdo == null) return null;
             zdo.Set(ArenaMark, 1);
+            // 2026-10-15 — l'arène est marquée indestructible à la construction, comme la ville :
+            // les combats ne cassent plus les gradins et il n'y a plus rien à réparer.
+            Indestructible.Mark(zdo, prefab);
             // 2026-10-12 — plus de verrouillage : le serveur ne retient plus la propriété des pièces.
             site.Pieces.Add(zdo.m_uid);
             return zdo;
